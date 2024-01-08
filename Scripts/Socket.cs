@@ -5,16 +5,19 @@ namespace GJNYS.Scripts;
 public partial class Socket : Node2D, IInteractable
 {
 	private Line2D _line;
-	private Node2D _player;
+	private Player _player;
 	private Socket _connectedSocket;
+	[Export] private Texture2D _ropeTexture;
 	
 	public override void _Ready()
 	{
 		_line = new Line2D();
-		_line.Width = 4;
+		_line.Width = 48;
 		_line.TopLevel = true;
 		_line.AddPoint(GlobalPosition);
 		_line.AddPoint(GlobalPosition);
+		_line.Texture = _ropeTexture;
+		_line.TextureMode = Line2D.LineTextureMode.Tile;
 		AddChild(_line);
 	}
 
@@ -32,11 +35,15 @@ public partial class Socket : Node2D, IInteractable
 
 	private void ConnectSocket(Socket socket)
 	{
-		if(_connectedSocket != null) return;
+		if(socket == this || _connectedSocket != null) return;
+		if (_player != null)
+		{
+			_player.ConnectedSocket = null;
+			_line.SetPointPosition(1, socket.GlobalPosition);
+		}
 		_player = null;
 		_connectedSocket = socket;
 		_connectedSocket.ConnectSocket(this);
-		_line.SetPointPosition(1, socket.GlobalPosition);
 	}
 
 	public override void _Process(double delta)
