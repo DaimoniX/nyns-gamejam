@@ -8,6 +8,11 @@ public partial class Socket : Node2D, IInteractable
 	private Player _player;
 	private Socket _connectedSocket;
 	[Export] private Texture2D _ropeTexture;
+
+	public void SetColor(Color color)
+	{
+		Modulate = color;
+	}
 	
 	public override void _Ready()
 	{
@@ -44,6 +49,14 @@ public partial class Socket : Node2D, IInteractable
 		_player = null;
 		_connectedSocket = socket;
 		_connectedSocket.ConnectSocket(this);
+	}
+
+	public void Deactivate()
+	{
+		if(_connectedSocket == null) return;
+		_connectedSocket.Deactivate();
+		_connectedSocket = null;
+		_line.SetPointPosition(1, GlobalPosition);
 	}
 
 	public override void _Process(double delta)

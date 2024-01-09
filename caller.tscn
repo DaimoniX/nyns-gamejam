@@ -1,0 +1,55 @@
+[gd_scene load_steps=2 format=3 uid="uid://bcylivojqfpah"]
+
+[ext_resource type="Script" path="res://Scripts/Caller.cs" id="1_s2l81"]
+
+[node name="Caller" type="Node2D" node_paths=PackedStringArray("_color")]
+script = ExtResource("1_s2l81")
+_color = NodePath("CallerColor")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -126.0
+offset_top = -72.0
+offset_right = 126.0
+offset_bottom = 72.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect2" type="ColorRect" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -108.0
+offset_top = -54.0
+offset_right = 108.0
+offset_bottom = 54.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="Label" type="Label" parent="."]
+offset_left = -90.0
+offset_top = -36.0
+offset_right = 32.0
+offset_bottom = -13.0
+text = "Someone is calling"
+
+[node name="CallerColor" type="ColorRect" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 36.0
+offset_top = 18.0
+offset_right = 90.0
+offset_bottom = 36.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 0.788235, 0, 1)
