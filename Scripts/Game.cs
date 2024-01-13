@@ -8,8 +8,6 @@ namespace GJNYS.Scripts;
 public partial class Game : Node2D
 {
 	[Export] private Control _gg;
-	private Timer _timer;
-
 	[Export] private Array<Caller> _callers = new();
 	[Export] private Array<Color> _colors = new();
 	[Export] private Array<Socket> _sockets = new();
@@ -36,21 +34,22 @@ public partial class Game : Node2D
 		{
 			_gg.Visible = value == 0;
 			if(_health > value)
-				_hps[_health - 1].Remove();
+				_hps[_health - 1].Call("damage");
 			else if(_health < value)
-				_hps[_health].Add();
+				_hps[_health].Call("heal");
 			_health = value;
 		}
 	}
 	
-	private Array<Hp> _hps = new();
-
+	private Array<Control> _hps = new();
+	private Timer _timer;
 
 	private struct ActiveCall
 	{
 		public int Id1;
 		public int Id2;
 		public bool Active;
+		public Color CallColor;
 		public static float Patience = 20f;
 		public float PatienceLeft;
 		public float TimeLeft;
@@ -66,16 +65,16 @@ public partial class Game : Node2D
 		
 		AddChild(_timer);
 		
-		for (var i = 0; i < _colors.Count; i++)
+		for (var i = 0; i < _callers.Count; i++)
 		{
-			_callers[i].SetColor(_colors[i]);
-			_sockets[i].SetColor(_colors[i]);
+			_callers[i].SetColor(Color);
+			_sockets[i].SetColor(Color);
 			_sockets[i].Connected += OnSocketConnected;
 		}
 
 		for (var i = 0; i < _health; i++)
 		{
-			var hp = _healthItem.Instantiate<Hp>();
+			var hp = _healthItem.Instantiate<Control>();
 			_hps.Add(hp);
 			_healthContainer.AddChild(hp);
 		}
@@ -137,6 +136,10 @@ public partial class Game : Node2D
 			if (call.TimeLeft < 0 || call.PatienceLeft < 0)
 			{
 				_callers[call.Id1].Active = _callers[call.Id2].Active = false;
+				
+				_sockets[call.Id1].SetColor(Color);
+				_sockets[call.Id2].SetColor(Color);
+				
 				_sockets[call.Id1].Deactivate();
 				_sockets[call.Id2].Deactivate();
 				if (call.PatienceLeft >= 0)
@@ -163,6 +166,9 @@ public partial class Game : Node2D
 		if (fId.Length < 2)
 			return;
 
+		var fColors = _colors.Where(c => _calls.All(call => call.CallColor != c)).ToArray();
+
+		var color = fColors[(int)(GD.Randi() % fColors.Length)];
 		var rfId1 = (int)(GD.Randi() % fId.Length);
 		var rfId2 = (int)(GD.Randi() % fId.Length);
 		
@@ -177,12 +183,16 @@ public partial class Game : Node2D
 		c1.Active = true;
 		c2.Active = true;
 
-		c1.SetColor(_colors[cId2]);
-		c2.SetColor(_colors[cId1]);
+		c1.SetColor(color);
+		c2.SetColor(color);
+		
+		_sockets[cId1].SetColor(color);
+		_sockets[cId2].SetColor(color);
+		
 		_sockets[cId1].AcceptedSocket = _sockets[cId2];
 		_sockets[cId2].AcceptedSocket = _sockets[cId1];
 		_sockets[cId1].Active = _sockets[cId2].Active = true;
 		
-		_calls.Add(new ActiveCall { Id1 = cId1, Id2 = cId2, TimeLeft = GD.RandRange(8, 16), Active = false, PatienceLeft = ActiveCall.Patience });
+		_calls.Add(new ActiveCall { Id1 = cId1, Id2 = cId2, TimeLeft = GD.RandRange(8, 16), Active = false, PatienceLeft = ActiveCall.Patience, CallColor = color });
 	}
 }

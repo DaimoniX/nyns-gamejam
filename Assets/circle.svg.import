@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bainsoqqtwnt"
-path="res://.godot/imported/wires.png-920f704aec15362b8e136f854b241816.ctex"
+uid="uid://bshjj662fabfp"
+path="res://.godot/imported/circle.svg-00d300fdb18cfe7be65614bc1af2844d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://wires.png"
-dest_files=["res://.godot/imported/wires.png-920f704aec15362b8e136f854b241816.ctex"]
+source_file="res://Assets/circle.svg"
+dest_files=["res://.godot/imported/circle.svg-00d300fdb18cfe7be65614bc1af2844d.ctex"]
 
 [params]
 
@@ -32,3 +32,6 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
+svg/scale=1.0
+editor/scale_with_editor_scale=false
+editor/convert_colors_with_editor_theme=false
