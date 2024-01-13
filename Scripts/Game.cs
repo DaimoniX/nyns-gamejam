@@ -48,6 +48,7 @@ public partial class Game : Node2D
 		for (var i = 0; i < _colors.Count; i++)
 		{
 			_callers[i].SetColor(_colors[i]);
+			_callers[i].TopLevel = true;
 			_sockets[i].SetColor(_colors[i]);
 			_sockets[i].Connected += OnSocketConnected;
 		}
