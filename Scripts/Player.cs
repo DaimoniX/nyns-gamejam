@@ -6,14 +6,17 @@ public partial class Player : CharacterBody2D
 {
 	[Export] private Area2D _interactionZone;
 	[Export] private Sprite2D _character;
-	private bool _grounded;
 	
 	[Export] private float _speed = 300.0f;
 	[Export] private float _jumpVelocity = 600.0f;
 	[Export] private RayCast2D _putChecker;
+	
+	private bool _grounded;
 	public Box HoldingBox { get; set; }
-
 	private readonly float _gravity = ProjectSettings.GetSetting("physics/2d/default_gravity").AsSingle();
+
+	private const float CoyoteTime = 0.15f;
+	private float _coyote = 0.1f;
 	
 	public Socket ConnectedSocket { get; set; }
 
@@ -32,11 +35,16 @@ public partial class Player : CharacterBody2D
 		var input = Input.GetAxis("left", "right");
 		
 		velocity.X = Mathf.MoveToward(velocity.X, input * _speed, _speed * (float)delta * 5f);
-		
+
 		if (!IsOnFloor())
+		{
+			_coyote -= (float)delta;
 			velocity.Y += _gravity * 1.5f * (float)delta;
+		}
+		else
+			_coyote = CoyoteTime;
 		
-		if (Input.IsActionJustPressed("jump") && IsOnFloor())
+		if (Input.IsActionJustPressed("jump") && (IsOnFloor() || _coyote > 0))
 			velocity.Y = -_jumpVelocity;
 		
 		_character.FlipH = input switch
@@ -54,16 +62,14 @@ public partial class Player : CharacterBody2D
 		MoveAndSlide();
 
 		if (HoldingBox != null)
-		{
 			HoldingBox.GlobalPosition = GlobalPosition + Vector2.Up + Vector2.Right * (_character.FlipH ? 25 : -25);
-		}
 	}
 
 	private void Interact()
 	{
 		if (HoldingBox != null)
 		{
-			_putChecker.TargetPosition = Vector2.Right * (_character.FlipH ? 50 : -50);
+			_putChecker.TargetPosition = Vector2.Right * (_character.FlipH ? 60 : -60);
 			_putChecker.ForceRaycastUpdate();
 			if(_putChecker.IsColliding()) return;
 			HoldingBox.Put(GlobalPosition + Vector2.Up + Vector2.Right * (_character.FlipH ? 50 : -50));

@@ -32,7 +32,8 @@ public partial class Game : Node2D
 		public int Id1;
 		public int Id2;
 		public bool Active;
-		public float Patience;
+		public const float Patience = 20f;
+		public float PatienceLeft;
 		public float TimeLeft;
 	}
 
@@ -44,7 +45,6 @@ public partial class Game : Node2D
 		_timer.OneShot = true;
 		_timer.Timeout += Call;
 		AddChild(_timer);
-		Call();
 		for (var i = 0; i < _colors.Count; i++)
 		{
 			_callers[i].SetColor(_colors[i]);
@@ -52,6 +52,7 @@ public partial class Game : Node2D
 			_sockets[i].Connected += OnSocketConnected;
 		}
 		Score = 0;
+		Call();
 	}
 
 	private void OnSocketConnected(Socket a, Socket b)
@@ -83,6 +84,8 @@ public partial class Game : Node2D
 
 	private void UpdateCalls(float delta, int i = 0)
 	{
+		if (_calls.All(c => c.Active))
+			Call();
 		for (; i < _calls.Count; i++)
 		{
 			var call = _calls[i];
@@ -94,17 +97,17 @@ public partial class Game : Node2D
 			}
 			else
 			{
-				call.Patience -= delta;
-				_callers[call.Id1].SetPatience(call.Patience);
-				_callers[call.Id2].SetPatience(call.Patience);
+				call.PatienceLeft -= delta;
+				_callers[call.Id1].SetPatience(call.PatienceLeft / ActiveCall.Patience);
+				_callers[call.Id2].SetPatience(call.PatienceLeft / ActiveCall.Patience);
 			}
 			
-			if (call.TimeLeft < 0 || call.Patience < 0)
+			if (call.TimeLeft < 0 || call.PatienceLeft < 0)
 			{
 				_callers[call.Id1].Active = _callers[call.Id2].Active = false;
 				_sockets[call.Id1].Deactivate();
 				_sockets[call.Id2].Deactivate();
-				if (call.Patience >= 0)
+				if (call.PatienceLeft >= 0)
 					Score++;
 				_calls.RemoveAt(i);
 				UpdateCalls(delta, i);
@@ -116,7 +119,8 @@ public partial class Game : Node2D
 
 	private void Call()
 	{
-		_timer.Start(GD.RandRange(12, 24));
+		_timer.Stop();
+		_timer.Start(GD.RandRange(8, 16));
 		var fId = _callers.Select((_, i) => i).Where(x => !_callers[x].Active).ToArray();
 		if (fId.Length < 2)
 			return;
@@ -135,8 +139,10 @@ public partial class Game : Node2D
 		c1.Active = true;
 		c2.Active = true;
 
+		c1.SetColor(_sockets[cId2].Modulate);
+		c2.SetColor(_sockets[cId1].Modulate);
 		_sockets[cId1].Active = _sockets[cId2].Active = true;
 		
-		_calls.Add(new ActiveCall { Id1 = cId1, Id2 = cId2, TimeLeft = GD.RandRange(8, 16), Active = false, Patience = 16 });
+		_calls.Add(new ActiveCall { Id1 = cId1, Id2 = cId2, TimeLeft = GD.RandRange(8, 16), Active = false, PatienceLeft = ActiveCall.Patience });
 	}
 }
