@@ -10,11 +10,13 @@ public partial class Socket : Node2D, IInteractable
 	private Player _player;
 	private Socket _connectedSocket;
 	[Export] private Texture2D _ropeTexture;
+	[Export] private PointLight2D _pointLight;
 	public bool Active { get; set; }
+	public Socket AcceptedSocket { get; set; }
 
 	public void SetColor(Color color)
 	{
-		Modulate = color;
+		_pointLight.Color = color;
 	}
 	
 	public override void _Ready()
@@ -25,6 +27,7 @@ public partial class Socket : Node2D, IInteractable
 		_line.AddPoint(GlobalPosition);
 		_line.AddPoint(GlobalPosition);
 		_line.Texture = _ropeTexture;
+		_line.ZIndex++;
 		_line.TextureMode = Line2D.LineTextureMode.Tile;
 		AddChild(_line);
 	}
@@ -39,8 +42,11 @@ public partial class Socket : Node2D, IInteractable
 			_player = null;
 			_line.SetPointPosition(1, GlobalPosition);
 		}
-		else if(player.ConnectedSocket != null)
-			ConnectSocket(player.ConnectedSocket);
+		else if (player.ConnectedSocket != null)
+		{
+			if(player.ConnectedSocket == AcceptedSocket)
+				ConnectSocket(player.ConnectedSocket);
+		}
 		else
 		{
 			_player = player;

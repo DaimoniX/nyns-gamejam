@@ -4,7 +4,6 @@ namespace GJNYS.Scripts;
 
 public partial class Caller : Node2D
 {
-	[Export] private ColorRect _color;
 	[Export] private TextureProgressBar _patience;
 	public bool Active { get; set; }
 	public bool LeftSide { get; private set; }
@@ -17,7 +16,7 @@ public partial class Caller : Node2D
 
 	public void SetColor(Color color)
 	{
-		_color.Color = color;
+		_patience.TintProgress = color;
 	}
 
 	public void SetPatience(float val)

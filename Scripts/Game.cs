@@ -12,7 +12,6 @@ public partial class Game : Node2D
 	[Export] private Array<Caller> _callers = new();
 	[Export] private Array<Color> _colors = new();
 	[Export] private Array<Socket> _sockets = new();
-
 	[Export] private Label _scoreLabel;
 
 	private static readonly Color Color = new(255, 255, 255, 0f);
@@ -48,7 +47,6 @@ public partial class Game : Node2D
 		for (var i = 0; i < _colors.Count; i++)
 		{
 			_callers[i].SetColor(_colors[i]);
-			_callers[i].TopLevel = true;
 			_sockets[i].SetColor(_colors[i]);
 			_sockets[i].Connected += OnSocketConnected;
 		}
@@ -75,9 +73,9 @@ public partial class Game : Node2D
 		{
 			var side = c.LeftSide ? -1 : 1;
 			var pos = c.GlobalPosition;
-			pos.X = Mathf.Lerp(pos.X, c.Active ? 650 * side : 1000 * side, (float)delta * 2);
+			pos.X = Mathf.Lerp(pos.X, c.Active ? 650 * side : 1000 * side, (float)delta * 4);
 			c.GlobalPosition = pos;
-			c.Modulate = c.Modulate.Lerp(c.Active ? Colors.White : Color, (float)delta * 2);
+			c.Modulate = c.Modulate.Lerp(c.Active ? Colors.White : Color, (float)delta * 4);
 		}
 
 		UpdateCalls((float)delta);
@@ -140,8 +138,10 @@ public partial class Game : Node2D
 		c1.Active = true;
 		c2.Active = true;
 
-		c1.SetColor(_sockets[cId2].Modulate);
-		c2.SetColor(_sockets[cId1].Modulate);
+		c1.SetColor(_colors[cId2]);
+		c2.SetColor(_colors[cId1]);
+		_sockets[cId1].AcceptedSocket = _sockets[cId2];
+		_sockets[cId2].AcceptedSocket = _sockets[cId1];
 		_sockets[cId1].Active = _sockets[cId2].Active = true;
 		
 		_calls.Add(new ActiveCall { Id1 = cId1, Id2 = cId2, TimeLeft = GD.RandRange(8, 16), Active = false, PatienceLeft = ActiveCall.Patience });
