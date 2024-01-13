@@ -70,6 +70,7 @@ public partial class Player : CharacterBody2D
 			HoldingBox = null;
 			return;
 		}
+		
 		var iBod = _interactionZone.GetOverlappingBodies();
 		foreach (var b in iBod)
 			if (b is IInteractable i)

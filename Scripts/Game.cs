@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using Godot.Collections;
 
@@ -8,26 +9,34 @@ public partial class Game : Node2D
 {
 	private Timer _timer;
 
-	[Export]
-	private Array<Caller> _leftSlots = new();
-	[Export]
-	private Array<Caller> _rightSlots = new();
-	[Export]
-	private Array<Color> _colors = new();
-	[Export]
-	private Array<Socket> _sockets = new();
+	[Export] private Array<Caller> _callers = new();
+	[Export] private Array<Color> _colors = new();
+	[Export] private Array<Socket> _sockets = new();
+
+	[Export] private Label _scoreLabel;
 
 	private static readonly Color Color = new(255, 255, 255, 0f);
-	private int _freePairs;
-
-	struct ActiveCall
+	private int Score
 	{
-		public int Caller1;
-		public int Caller2;
+		get => _score;
+		set
+		{
+			_score = value;
+			_scoreLabel.Text = $"Score: {_score}";
+		}
+	}
+	private int _score;
+
+	private struct ActiveCall
+	{
+		public int Id1;
+		public int Id2;
+		public bool Active;
+		public float Patience;
 		public float TimeLeft;
 	}
 
-	private List<ActiveCall> _calls = new();
+	private readonly List<ActiveCall> _calls = new();
 
 	public override void _Ready()
 	{
@@ -36,27 +45,37 @@ public partial class Game : Node2D
 		_timer.Timeout += Call;
 		AddChild(_timer);
 		Call();
-		_freePairs = _leftSlots.Count / 2;
-		for(var i = 0; i < _colors.Count; i++)
+		for (var i = 0; i < _colors.Count; i++)
+		{
+			_callers[i].SetColor(_colors[i]);
 			_sockets[i].SetColor(_colors[i]);
+			_sockets[i].Connected += OnSocketConnected;
+		}
+		Score = 0;
+	}
+
+	private void OnSocketConnected(Socket a, Socket b)
+	{
+		var i1 = _sockets.IndexOf(a);
+		var i2 = _sockets.IndexOf(b);
+		for (var i = 0; i < _calls.Count; i++)
+		{
+			var call = _calls[i];
+			if ((call.Id1 == i1 && call.Id2 == i2) || (call.Id1 == i2 && call.Id2 == i1))
+				call.Active = true;
+			_calls[i] = call;
+		}
 	}
 
 	public override void _Process(double delta)
 	{
-		foreach (var lc in _leftSlots)
+		foreach (var c in _callers)
 		{
-			var pos = lc.GlobalPosition;
-			pos.X = Mathf.Lerp(pos.X,  lc.Active ? -650 : -1000, (float)delta * 2);
-			lc.GlobalPosition = pos;
-			lc.Modulate = lc.Modulate.Lerp(lc.Active ? Colors.White : Color, (float)delta * 2);
-		}
-		
-		foreach (var rc in _rightSlots)
-		{
-			var pos = rc.GlobalPosition;
-			pos.X = Mathf.Lerp(pos.X,  rc.Active ? 650 : 1000, (float)delta * 2);
-			rc.GlobalPosition = pos;
-			rc.Modulate = rc.Modulate.Lerp(rc.Active ? Colors.White : Color, (float)delta * 2);
+			var side = c.LeftSide ? -1 : 1;
+			var pos = c.GlobalPosition;
+			pos.X = Mathf.Lerp(pos.X, c.Active ? 650 * side : 1000 * side, (float)delta * 2);
+			c.GlobalPosition = pos;
+			c.Modulate = c.Modulate.Lerp(c.Active ? Colors.White : Color, (float)delta * 2);
 		}
 
 		UpdateCalls((float)delta);
@@ -67,12 +86,27 @@ public partial class Game : Node2D
 		for (; i < _calls.Count; i++)
 		{
 			var call = _calls[i];
-			call.TimeLeft -= delta;
-			if (call.TimeLeft < 0)
+			if (call.Active)
 			{
+				_callers[call.Id1].SetPatience(-1);
+				_callers[call.Id2].SetPatience(-1);
+				call.TimeLeft -= delta;
+			}
+			else
+			{
+				call.Patience -= delta;
+				_callers[call.Id1].SetPatience(call.Patience);
+				_callers[call.Id2].SetPatience(call.Patience);
+			}
+			
+			if (call.TimeLeft < 0 || call.Patience < 0)
+			{
+				_callers[call.Id1].Active = _callers[call.Id2].Active = false;
+				_sockets[call.Id1].Deactivate();
+				_sockets[call.Id2].Deactivate();
+				if (call.Patience >= 0)
+					Score++;
 				_calls.RemoveAt(i);
-				_leftSlots[call.Caller1].Active = false;
-				_rightSlots[call.Caller2].Active = false;
 				UpdateCalls(delta, i);
 				return;
 			}
@@ -82,15 +116,27 @@ public partial class Game : Node2D
 
 	private void Call()
 	{
-		var lc = (int)(GD.Randi() % _leftSlots.Count);
-		var rc = (int)(GD.Randi() % _rightSlots.Count);
-		var lac = _leftSlots[lc];
-		var rac = _rightSlots[rc];
-		lac.Active = true;
-		rac.Active = true;
-		lac.SetColor(_colors[4 + lc]);
-		rac.SetColor(_colors[4 + rc]);
-		_timer.Start(GD.RandRange(10, 20));
-		_calls.Add(new ActiveCall { Caller1 = lc, Caller2 = rc, TimeLeft = GD.RandRange(5, 15) });
+		_timer.Start(GD.RandRange(12, 24));
+		var fId = _callers.Select((_, i) => i).Where(x => !_callers[x].Active).ToArray();
+		if (fId.Length < 2)
+			return;
+
+		var rfId1 = (int)(GD.Randi() % fId.Length);
+		var rfId2 = (int)(GD.Randi() % fId.Length);
+		
+		while (rfId2 == rfId1)
+			rfId2 = (int)(GD.Randi() % fId.Length);
+		
+		var cId1 = fId[rfId1];
+		var cId2 = fId[rfId2];
+
+		var c1 = _callers[cId1];
+		var c2 = _callers[cId2];
+		c1.Active = true;
+		c2.Active = true;
+
+		_sockets[cId1].Active = _sockets[cId2].Active = true;
+		
+		_calls.Add(new ActiveCall { Id1 = cId1, Id2 = cId2, TimeLeft = GD.RandRange(8, 16), Active = false, Patience = 16 });
 	}
 }

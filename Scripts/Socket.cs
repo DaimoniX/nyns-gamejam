@@ -4,10 +4,13 @@ namespace GJNYS.Scripts;
 
 public partial class Socket : Node2D, IInteractable
 {
+	[Signal]
+	public delegate void ConnectedEventHandler(Socket a, Socket b);
 	private Line2D _line;
 	private Player _player;
 	private Socket _connectedSocket;
 	[Export] private Texture2D _ropeTexture;
+	public bool Active { get; set; }
 
 	public void SetColor(Color color)
 	{
@@ -28,8 +31,15 @@ public partial class Socket : Node2D, IInteractable
 
 	public void Interact(Player player)
 	{
-		if(_connectedSocket != null) return;
-		if(player.ConnectedSocket != null)
+		if(_connectedSocket != null || !Active) return;
+		
+		if (player.ConnectedSocket == this)
+		{
+			player.ConnectedSocket = null;
+			_player = null;
+			_line.SetPointPosition(1, GlobalPosition);
+		}
+		else if(player.ConnectedSocket != null)
 			ConnectSocket(player.ConnectedSocket);
 		else
 		{
@@ -40,7 +50,7 @@ public partial class Socket : Node2D, IInteractable
 
 	private void ConnectSocket(Socket socket)
 	{
-		if(socket == this || _connectedSocket != null) return;
+		if(socket == this || _connectedSocket != null || !Active) return;
 		if (_player != null)
 		{
 			_player.ConnectedSocket = null;
@@ -49,13 +59,24 @@ public partial class Socket : Node2D, IInteractable
 		_player = null;
 		_connectedSocket = socket;
 		_connectedSocket.ConnectSocket(this);
+		EmitSignal(SignalName.Connected, this, _connectedSocket);
 	}
 
 	public void Deactivate()
 	{
-		if(_connectedSocket == null) return;
-		_connectedSocket.Deactivate();
-		_connectedSocket = null;
+		Active = false;
+		if (_connectedSocket != null)
+		{
+			var cs = _connectedSocket;
+			_connectedSocket = null;
+			cs.Deactivate();
+		}
+		if (_player != null)
+		{
+			if(_player.ConnectedSocket == this)
+				_player.ConnectedSocket = null;
+			_player = null;
+		}
 		_line.SetPointPosition(1, GlobalPosition);
 	}
 
