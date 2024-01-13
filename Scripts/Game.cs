@@ -7,14 +7,17 @@ namespace GJNYS.Scripts;
 
 public partial class Game : Node2D
 {
+	[Export] private Control _gg;
 	private Timer _timer;
 
 	[Export] private Array<Caller> _callers = new();
 	[Export] private Array<Color> _colors = new();
 	[Export] private Array<Socket> _sockets = new();
 	[Export] private Label _scoreLabel;
-
 	private static readonly Color Color = new(255, 255, 255, 0f);
+	[Export] private PackedScene _healthItem;
+	[Export] private HBoxContainer _healthContainer;
+	[Export] private int _health = 3;
 	private int Score
 	{
 		get => _score;
@@ -26,12 +29,29 @@ public partial class Game : Node2D
 	}
 	private int _score;
 
+	private int Health
+	{
+		get => _health;
+		set
+		{
+			_gg.Visible = value == 0;
+			if(_health > value)
+				_hps[_health - 1].Remove();
+			else if(_health < value)
+				_hps[_health].Add();
+			_health = value;
+		}
+	}
+	
+	private Array<Hp> _hps = new();
+
+
 	private struct ActiveCall
 	{
 		public int Id1;
 		public int Id2;
 		public bool Active;
-		public const float Patience = 20f;
+		public static float Patience = 20f;
 		public float PatienceLeft;
 		public float TimeLeft;
 	}
@@ -43,15 +63,26 @@ public partial class Game : Node2D
 		_timer = new Timer();
 		_timer.OneShot = true;
 		_timer.Timeout += Call;
+		
 		AddChild(_timer);
+		
 		for (var i = 0; i < _colors.Count; i++)
 		{
 			_callers[i].SetColor(_colors[i]);
 			_sockets[i].SetColor(_colors[i]);
 			_sockets[i].Connected += OnSocketConnected;
 		}
+
+		for (var i = 0; i < _health; i++)
+		{
+			var hp = _healthItem.Instantiate<Hp>();
+			_hps.Add(hp);
+			_healthContainer.AddChild(hp);
+		}
+		
 		Score = 0;
 		Call();
+		_gg.Visible = false;
 	}
 
 	private void OnSocketConnected(Socket a, Socket b)
@@ -69,6 +100,8 @@ public partial class Game : Node2D
 
 	public override void _Process(double delta)
 	{
+		if(_health < 1) return;
+		
 		foreach (var c in _callers)
 		{
 			var side = c.LeftSide ? -1 : 1;
@@ -107,7 +140,12 @@ public partial class Game : Node2D
 				_sockets[call.Id1].Deactivate();
 				_sockets[call.Id2].Deactivate();
 				if (call.PatienceLeft >= 0)
+				{
+					ActiveCall.Patience = Mathf.Clamp(ActiveCall.Patience - 0.2f, 6.5f, 20f);
 					Score++;
+				}
+				else
+					Health--;
 				_calls.RemoveAt(i);
 				UpdateCalls(delta, i);
 				return;
@@ -118,6 +156,7 @@ public partial class Game : Node2D
 
 	private void Call()
 	{
+		if(_health < 1) return;
 		_timer.Stop();
 		_timer.Start(GD.RandRange(8, 16));
 		var fId = _callers.Select((_, i) => i).Where(x => !_callers[x].Active).ToArray();
