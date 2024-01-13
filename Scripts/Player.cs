@@ -5,7 +5,7 @@ namespace GJNYS.Scripts;
 public partial class Player : CharacterBody2D
 {
 	[Export] private Area2D _interactionZone;
-	[Export] private Sprite2D _character;
+	[Export] private AnimatedSprite2D _character;
 	
 	[Export] private float _speed = 300.0f;
 	[Export] private float _jumpVelocity = 600.0f;
@@ -43,16 +43,17 @@ public partial class Player : CharacterBody2D
 		}
 		else
 			_coyote = CoyoteTime;
-		
+
 		if (Input.IsActionJustPressed("jump") && (IsOnFloor() || _coyote > 0))
-			velocity.Y = -_jumpVelocity;
-		
-		_character.FlipH = input switch
 		{
-			> 0 when !_character.FlipH => true,
-			< 0 when _character.FlipH => false,
-			_ => _character.FlipH
-		};
+			velocity.Y = -_jumpVelocity;
+			_character.Play("jump");
+		}
+
+		if (!_character.FlipH && velocity.X < 0)
+			_character.FlipH = true;
+		if (_character.FlipH && velocity.X > 0)
+			_character.FlipH = false;
 
 		Velocity = velocity;
 		
@@ -60,19 +61,30 @@ public partial class Player : CharacterBody2D
 		if (c?.GetCollider() is RigidBody2D r && _interactionZone.GetOverlappingBodies().Contains(r))
 			r.ApplyCentralImpulse(new Vector2(Velocity.X / r.Mass, 0));
 		MoveAndSlide();
+		HandleAnimation();
 
 		if (HoldingBox != null)
-			HoldingBox.GlobalPosition = GlobalPosition + Vector2.Up + Vector2.Right * (_character.FlipH ? 25 : -25);
+			HoldingBox.GlobalPosition = GlobalPosition + Vector2.Up + Vector2.Right * (_character.FlipH ? -25 : 25);
+	}
+
+	private void HandleAnimation()
+	{
+		if(!IsOnFloor())
+			_character.Play("fall");
+		else if(Mathf.Abs(Velocity.X) > 0.05f)
+			_character.Play("walk");
+		else
+			_character.Play("idle");
 	}
 
 	private void Interact()
 	{
 		if (HoldingBox != null)
 		{
-			_putChecker.TargetPosition = Vector2.Right * (_character.FlipH ? 60 : -60);
+			_putChecker.TargetPosition = Vector2.Right * (_character.FlipH ? -60 : 60);
 			_putChecker.ForceRaycastUpdate();
 			if(_putChecker.IsColliding()) return;
-			HoldingBox.Put(GlobalPosition + Vector2.Up + Vector2.Right * (_character.FlipH ? 50 : -50));
+			HoldingBox.Put(GlobalPosition + Vector2.Up + Vector2.Right * (_character.FlipH ? -50 : 50));
 			HoldingBox = null;
 			return;
 		}
