@@ -144,7 +144,7 @@ public partial class Game : Node2D
 				_sockets[call.Id2].Deactivate();
 				if (call.PatienceLeft >= 0)
 				{
-					ActiveCall.Patience = Mathf.Clamp(ActiveCall.Patience - 0.2f, 6.5f, 20f);
+					ActiveCall.Patience = Mathf.Clamp(ActiveCall.Patience - 0.4f, 6.5f, 20f);
 					Score++;
 				}
 				else
@@ -161,7 +161,7 @@ public partial class Game : Node2D
 	{
 		if(_health < 1) return;
 		_timer.Stop();
-		_timer.Start(GD.RandRange(8, 16));
+		_timer.Start(GD.RandRange(8, 16) - _score * 0.1f);
 		var fId = _callers.Select((_, i) => i).Where(x => !_callers[x].Active).ToArray();
 		if (fId.Length < 2)
 			return;
@@ -193,6 +193,6 @@ public partial class Game : Node2D
 		_sockets[cId2].AcceptedSocket = _sockets[cId1];
 		_sockets[cId1].Active = _sockets[cId2].Active = true;
 		
-		_calls.Add(new ActiveCall { Id1 = cId1, Id2 = cId2, TimeLeft = GD.RandRange(8, 16), Active = false, PatienceLeft = ActiveCall.Patience, CallColor = color });
+		_calls.Add(new ActiveCall { Id1 = cId1, Id2 = cId2, TimeLeft = GD.RandRange(8, 16) - _score * 0.1f, Active = false, PatienceLeft = ActiveCall.Patience, CallColor = color });
 	}
 }
