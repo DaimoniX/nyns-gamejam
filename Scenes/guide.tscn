@@ -1,0 +1,64 @@
+[gd_scene load_steps=4 format=3 uid="uid://d0qc5lixogw7u"]
+
+[ext_resource type="Script" path="res://Scripts/gd/guide.gd" id="1_ye06g"]
+[ext_resource type="Texture2D" uid="uid://c3pdvmtnt0pka" path="res://Assets/background3.png" id="2_d0u8g"]
+[ext_resource type="Theme" uid="uid://c1ua0cnddtcvp" path="res://ui_theme.theme" id="3_nvh7c"]
+
+[node name="Guide" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ye06g")
+
+[node name="Background3" type="Sprite2D" parent="."]
+position = Vector2(576, 324)
+scale = Vector2(0.6, 0.6)
+texture = ExtResource("2_d0u8g")
+
+[node name="Menu" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -152.5
+offset_top = -115.0
+offset_right = 152.5
+offset_bottom = -32.0
+grow_horizontal = 2
+grow_vertical = 0
+theme = ExtResource("3_nvh7c")
+text = "BACK TO MAIN MENU"
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = -1
+offset_left = 51.0
+offset_top = 32.0
+offset_right = 1110.0
+offset_bottom = 525.0
+text = "Welcome to the game!
+
+Today, you have an important task ahead - to ensure high-quality calls for our users;
+otherwise, they might end up dissatisfied.
+
+Game Rules:
+
+    Character Controls:
+        Use the A key to move left.
+        Use the D key to move right.
+        Press the Spacebar to jump.
+
+    Connecting the Dots:
+        Connect dots of the same color to enable communication between callers.
+
+    Time and Lives:
+        If you fail to connect two dots within a certain time, you'll lose 1 life (total of 3).
+        As you achieve specific scores, the speed will increase, so factor that into your strategy.
+        GLHF!!"
+
+[connection signal="pressed" from="Menu" to="." method="menu"]
