@@ -16,12 +16,17 @@ public partial class Game : Node2D
 	[Export] private PackedScene _healthItem;
 	[Export] private HBoxContainer _healthContainer;
 	[Export] private int _health = 3;
+	[Export] private AudioStreamPlayer _audioPlayer;
+	[Export] private AudioStream _scoreAudio;
+	
 	private int Score
 	{
 		get => _score;
 		set
 		{
 			_score = value;
+			_audioPlayer.Stream = _scoreAudio;
+			_audioPlayer.Play();
 			_scoreLabel.Text = $"Score: {_score}";
 		}
 	}

@@ -11,6 +11,9 @@ public partial class Player : CharacterBody2D
 	[Export] private float _jumpVelocity = 600.0f;
 	[Export] private RayCast2D _putChecker;
 	
+	private AudioStreamPlayer _audioPlayer;
+	[Export] private AudioStream _jumpAudio;
+	
 	private bool _grounded;
 	public Box HoldingBox { get; set; }
 	private readonly float _gravity = ProjectSettings.GetSetting("physics/2d/default_gravity").AsSingle();
@@ -19,6 +22,13 @@ public partial class Player : CharacterBody2D
 	private float _coyote = 0.1f;
 	
 	public Socket ConnectedSocket { get; set; }
+
+	public override void _Ready()
+	{
+		_audioPlayer = new AudioStreamPlayer();
+		AddChild(_audioPlayer);
+		_audioPlayer.VolumeDb -= 5f;
+	}
 
 	public override void _Process(double delta)
 	{
@@ -47,6 +57,8 @@ public partial class Player : CharacterBody2D
 		if (Input.IsActionJustPressed("jump") && (IsOnFloor() || _coyote > 0))
 		{
 			velocity.Y = -_jumpVelocity;
+			_audioPlayer.Stream = _jumpAudio;
+			_audioPlayer.Play();
 			_character.Play("jump");
 		}
 
